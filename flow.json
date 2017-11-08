@@ -1,0 +1,331 @@
+[
+    {
+        "id": "16ad6e6d.02dca2",
+        "type": "tab",
+        "label": "RARBG-Magnets",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "7d0e6f96.c5bf4",
+        "type": "ui_text_input",
+        "z": "16ad6e6d.02dca2",
+        "name": "Cuadro de texto",
+        "label": "Buscar torrents",
+        "group": "822d107a.3a92",
+        "order": 0,
+        "width": "12",
+        "height": "3",
+        "passthru": true,
+        "mode": "text",
+        "delay": "0",
+        "topic": "",
+        "x": 86,
+        "y": 147,
+        "wires": [
+            [
+                "3b004f26.4fd79",
+                "c4f9303f.46684",
+                "264c608e.6786"
+            ]
+        ]
+    },
+    {
+        "id": "3b004f26.4fd79",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Formar Debug inicial",
+        "func": "var msgOut = {\n    payload : \"Búsqueda de torrent: '\" + msg.payload + \"'.\"\n};\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 272,
+        "y": 46,
+        "wires": [
+            [
+                "e5b8f2b3.be7c3"
+            ]
+        ]
+    },
+    {
+        "id": "e5b8f2b3.be7c3",
+        "type": "debug",
+        "z": "16ad6e6d.02dca2",
+        "name": "Debug inicial",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 509,
+        "y": 47,
+        "wires": []
+    },
+    {
+        "id": "c4f9303f.46684",
+        "type": "http request",
+        "z": "16ad6e6d.02dca2",
+        "name": "Obtener Token",
+        "method": "GET",
+        "ret": "txt",
+        "url": "https://torrentapi.org/pubapi_v2.php?get_token=get_token",
+        "tls": "",
+        "x": 182,
+        "y": 244,
+        "wires": [
+            [
+                "8d4d14e9.961d38"
+            ]
+        ]
+    },
+    {
+        "id": "264c608e.6786",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Devuelve Search Term",
+        "func": "var msgOut = {\n    payload : msg.payload,\n    topic : \"search\"\n}\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 511,
+        "y": 148,
+        "wires": [
+            [
+                "a28feaff.f55d68"
+            ]
+        ]
+    },
+    {
+        "id": "67a85016.d35f7",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Devuelve Token",
+        "func": "var msgOut = {\n    payload : msg.payload[\"token\"],\n    topic : \"token\"\n};\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 535,
+        "y": 242,
+        "wires": [
+            [
+                "665a0ac2.96a854"
+            ]
+        ]
+    },
+    {
+        "id": "8d4d14e9.961d38",
+        "type": "json",
+        "z": "16ad6e6d.02dca2",
+        "name": "",
+        "pretty": false,
+        "x": 359,
+        "y": 243,
+        "wires": [
+            [
+                "67a85016.d35f7"
+            ]
+        ]
+    },
+    {
+        "id": "a28feaff.f55d68",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Formar URL búsqueda",
+        "func": "//Necesitamos search term y token.\n//En principio search term llega antes que token.\n//FORMATO URL: \"https://torrentapi.org/pubapi_v2.php?mode=search&search_string={search}&token={token}&limit={limit}\n\nvar token = context.get(\"token\") || false;\nvar search = context.get(\"search\") || false;\nvar limit = 10; //Hacer configurable más adelante\n\nif (msg.topic == \"token\") { //Recibo Token\n    if (search === false) { //No se había recibido Search\n        context.set(\"token\", msg.payload);\n    } else { //Ya se recibió Search\n        token = msg.payload;\n    }\n}\n\nelse if (msg.topic == \"search\") { //Recibo Search\n    if (token === false) { //No se había recibido Token\n        context.set(\"search\", msg.payload);\n    } else { //Ya se recibió Token\n        search = msg.payload;\n    }\n}\n\nif (token !== false && search !== false) { //FINAL: Formar URL\n    var url = \"https://torrentapi.org/pubapi_v2.php?mode=search&search_string=\" + search + \"&token=\" + token + \"&limit=\" + limit;\n    \n    var msgOut = {\n        url : url\n    };\n\n    return msgOut;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1003.3333969116211,
+        "y": 148.33334636688232,
+        "wires": [
+            [
+                "4a748665.a4a408",
+                "332bfad9.c1dbf6"
+            ]
+        ]
+    },
+    {
+        "id": "4a748665.a4a408",
+        "type": "http request",
+        "z": "16ad6e6d.02dca2",
+        "name": "Obtener JSON con resultados",
+        "method": "GET",
+        "ret": "txt",
+        "url": "",
+        "tls": "",
+        "x": 1297.3333435058594,
+        "y": 196.00000286102295,
+        "wires": [
+            [
+                "11c1d0e7.7a81af",
+                "c636ffd4.f6505"
+            ]
+        ]
+    },
+    {
+        "id": "11c1d0e7.7a81af",
+        "type": "json",
+        "z": "16ad6e6d.02dca2",
+        "name": "",
+        "pretty": false,
+        "x": 1528.3333435058594,
+        "y": 196.00000286102295,
+        "wires": [
+            [
+                "372e0db9.b53e82"
+            ]
+        ]
+    },
+    {
+        "id": "332bfad9.c1dbf6",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Formar Debug URL",
+        "func": "var msgOut = {\n    payload : \"Buscando con la URL: '\" + msg.url + \"'.\"\n};\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1258.6666412353516,
+        "y": 95,
+        "wires": [
+            [
+                "230a91f6.a9d3ee"
+            ]
+        ]
+    },
+    {
+        "id": "230a91f6.a9d3ee",
+        "type": "debug",
+        "z": "16ad6e6d.02dca2",
+        "name": "Debug URL",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 1478.6666412353516,
+        "y": 95,
+        "wires": []
+    },
+    {
+        "id": "c636ffd4.f6505",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Formar Debug resultado",
+        "func": "var msgOut = {\n    payload : \"Obtenida respuesta:\\n\" + msg.payload\n};\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1630.3333435058594,
+        "y": 292.00000286102295,
+        "wires": [
+            [
+                "e7d0ec69.1635b"
+            ]
+        ]
+    },
+    {
+        "id": "e7d0ec69.1635b",
+        "type": "debug",
+        "z": "16ad6e6d.02dca2",
+        "name": "Debug resultado",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 1885.3333435058594,
+        "y": 292.00000286102295,
+        "wires": []
+    },
+    {
+        "id": "665a0ac2.96a854",
+        "type": "delay",
+        "z": "16ad6e6d.02dca2",
+        "name": "Delay 2,5\"",
+        "pauseType": "delay",
+        "timeout": "2500",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "x": 758.3333435058594,
+        "y": 241.00000762939453,
+        "wires": [
+            [
+                "a28feaff.f55d68"
+            ]
+        ]
+    },
+    {
+        "id": "372e0db9.b53e82",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Crear HTML resultados",
+        "func": "var json = msg.payload; //Objeto JSON Original recibido\n\nvar results = json[\"torrent_results\"]; //Array resultados JSON\nvar html = \"<ul>\";\n\nfor (var i=0; i < results.length; i++) {\n    var magnetLink = results[i][\"download\"];\n    var name = results[i][\"filename\"];\n    \n    //Split del magnetLink (magnet:?xt=urn:btih:a96e91a8900134b9523906a5ffbd88fa8e8105c0&dn=The.Walking.Dead.S08E03.1080p.WEB-DL.DD5.1.H264-RARBG&tr=http%3A%2F%2Ftracker.trackerfix.com%3A80%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2710&tr=udp%3A%2F%2F9.rarbg.to%3A2710&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce)\n    //Tenemos que quedarnos con la ID del principio\n    var magnetID = magnetLink.split(\"magnet:?xt=urn:btih:\")[1].split(\"&\")[0];\n    var torrentLink = \"http://itorrents.org/torrent/\" + magnetID + \".torrent\";\n    var downloadName = name.replace(\" \", \"_\") + \".torrent\";\n    \n    html += \"<li><a href='\";\n    html += torrentLink;\n    html += \"' download='\";\n    html += downloadName;\n    html += \"'>\";\n    html += name;\n    html += \"</a> (\";\n    html += \"<a href='\";\n    html += magnetLink;\n    html += \"'>Magnet)</a>\";\n    html += \"</li>\";\n}\n\nhtml += \"</ul>\";\n\nvar msgOut = {\n    topic : \"Encontrados \" + json.length + \" resultados:\",\n    payload : html\n};\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1748,
+        "y": 196,
+        "wires": [
+            [
+                "96fd77a6.452818",
+                "92170281.97823"
+            ]
+        ]
+    },
+    {
+        "id": "96fd77a6.452818",
+        "type": "function",
+        "z": "16ad6e6d.02dca2",
+        "name": "Formar Debug resultado HTML",
+        "func": "var msgOut = {\n    payload : \"HTML de salida con resultados:\\n\" + msg.payload\n};\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 2024,
+        "y": 91,
+        "wires": [
+            [
+                "a649055d.dfb398"
+            ]
+        ]
+    },
+    {
+        "id": "a649055d.dfb398",
+        "type": "debug",
+        "z": "16ad6e6d.02dca2",
+        "name": "Debug resultado",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 2284,
+        "y": 91,
+        "wires": []
+    },
+    {
+        "id": "92170281.97823",
+        "type": "ui_text",
+        "z": "16ad6e6d.02dca2",
+        "group": "822d107a.3a92",
+        "order": 0,
+        "width": "12",
+        "height": "12",
+        "name": "Resultados",
+        "label": "Resultados",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "x": 2288,
+        "y": 195,
+        "wires": []
+    },
+    {
+        "id": "822d107a.3a92",
+        "type": "ui_group",
+        "z": "",
+        "name": "Buscar y Resultados",
+        "tab": "92319142.e471c",
+        "order": 1,
+        "disp": false,
+        "width": "12"
+    },
+    {
+        "id": "92319142.e471c",
+        "type": "ui_tab",
+        "z": "",
+        "name": "RARBG1",
+        "icon": "dashboard",
+        "order": 1
+    }
+]
